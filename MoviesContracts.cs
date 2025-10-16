@@ -1,26 +1,26 @@
 using System.Text.Json.Serialization;
 namespace MovieData;
 
-public class Response
+public class MovieResponse
 {
     [JsonPropertyName("results")]
-    public Movie[]? Movies;
+    public Movie[]? Movies { get; set; }
 }
 
 public class Movie
 {
     [JsonPropertyName("title")]
-    public required string Title;
+    public required string Title { get; set; }
 
     [JsonPropertyName("overview")]
-    public required string Description;
+    public required string Description { get; set; }
 
     [JsonPropertyName("release_date")]
-    public required string ReleaseDate;
+    public required string ReleaseDate { get; set; }
 
     [JsonPropertyName("vote_average")]
-    public required string PublicRating;
+    public required double PublicRating { get; set; }
 
     [JsonPropertyName("vote_count")]
-    public required string RatingCount;
+    public required int RatingCount { get; set; }
 }
