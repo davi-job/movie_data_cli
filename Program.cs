@@ -1,7 +1,9 @@
 ﻿
-using System.Net.Http.Json;
-using System.Text.Json;
 using MovieData;
+using DotNetEnv;
+using System.Net.Http.Json;
+
+Env.Load();
 
 try
 {
@@ -24,38 +26,40 @@ try
     if (string.IsNullOrWhiteSpace(type))
         throw typeNull;
 
-    // Initialize http client    
-    HttpClient httpClient = new()
+    // Initialize http client and fetch response   
+    using HttpClient httpClient = new()
     {
-        BaseAddress = new Uri("https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=1"),
+        BaseAddress = new Uri("https://api.themoviedb.org/3/movie/"),
     };
+    httpClient.DefaultRequestHeaders.Add("accept", "application/json");
+    httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {Environment.GetEnvironmentVariable("TMDB_API_KEY")}");
 
-    HttpResponseMessage response;
-    string title = string.Empty;
+    string requestUrl = string.Empty;
+    string searchTitle = string.Empty;
 
     switch (type)
     {
         case "playing":
-            response = await httpClient.GetAsync("&sort_by=primary_release_date.desc&with_release_type=2|3&release_date.gte={min_date}&release_date.lte={max_date}");
-            title = "Now playing:";
+            requestUrl = "now_playing?language=en-US&page=1";
+            searchTitle = "Now playing:";
 
             break;
 
         case "popular":
-            response = await httpClient.GetAsync("&sort_by=popularity.desc");
-            title = "Most popular:";
+            requestUrl = "popular?language=en-US&page=1";
+            searchTitle = "Most popular:";
 
             break;
 
         case "top":
-            response = await httpClient.GetAsync("&sort_by=vote_average.desc&without_genres=99,10755&vote_count.gte=200");
-            title = "Top Rated:";
+            requestUrl = "top_rated?language=en-US&page=1";
+            searchTitle = "Top Rated:";
 
             break;
 
         case "upcoming":
-            response = await httpClient.GetAsync("&sort_by=primary_release_date.asc&with_release_type=2|3&release_date.gte={min_date}&release_date.lte={max_date}");
-            title = "Upcoming:";
+            requestUrl = $"upcoming?language=en-US&page=1";
+            searchTitle = "Upcoming:";
 
             break;
 
@@ -63,13 +67,29 @@ try
             throw new ArgumentOutOfRangeException("Invalid type. Please select one of the following types: 'playing', 'popular', 'top', 'upcoming'.");
     }
 
-    if (!response.IsSuccessStatusCode || response.Content == null)
-        throw new HttpRequestException("Failed to fetch the requested movies.");
+    HttpResponseMessage response = await httpClient.GetAsync(requestUrl);
 
-    Movie[]? movies = (await response.Content.ReadFromJsonAsync<Response>())?.Movies;
+    if (!response.IsSuccessStatusCode)
+    {
+        throw new HttpRequestException($"Failed to fetch the requested movies. (Error: {response.StatusCode})");
+    }
 
-    if (movies == null)
+    var responseJson = await response.Content.ReadFromJsonAsync<MovieResponse>();
+
+    Movie[]? movies = responseJson?.Movies;
+
+    if (movies == null || movies.Length == 0)
         throw new NullReferenceException("No movies were found.");
+
+    // Process output
+    Console.WriteLine(searchTitle + "\n");
+
+    foreach (Movie movie in movies)
+    {
+        Console.WriteLine(movie.Title);
+        Console.WriteLine(movie.Description);
+        Console.WriteLine($"{movie.ReleaseDate}\t{movie.PublicRating:f2}/10 ({movie.RatingCount} votes)\n");
+    }
 
     return 0;
 }

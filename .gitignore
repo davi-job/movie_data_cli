@@ -1,2 +1,5 @@
 [Bb]in/
 [Oo]bj/
+
+.env*
+!.env.example
