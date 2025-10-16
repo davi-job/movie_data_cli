@@ -86,3 +86,7 @@ This tool interacts with the TMDB API to retrieve movie lists based on different
 -   `popular`: Most popular movies
 -   `top`: Top rated movies of all time
 -   `upcoming`: Movies coming soon to theaters
+
+## Project URL
+
+[Backend Roadmanp Projects](https://roadmap.sh/projects/tmdb-cli)
